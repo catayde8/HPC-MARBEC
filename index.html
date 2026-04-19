@@ -85,20 +85,23 @@
         const fbApp = initializeApp(firebaseConfig);
         const auth = getAuth(fbApp);
         const db = getFirestore(fbApp);
+        const appId = "hpc--marbec"; // ID de tu proyecto
 
-        const state = { view: 'inicio', products: [], isAdmin: false, adminKey: "564879123@011@" };
+        const state = { view: 'inicio', products: [], isAdmin: false, adminKey: "564879123@011@", initialLoad: false };
 
         window.app = { 
             navigate: (v, p) => { 
                 state.view = v; 
                 state.params = p; 
                 render(); 
-            } 
+            },
+            refresh: () => render()
         };
 
+        // Autenticación obligatoria antes de cualquier operación
         onAuthStateChanged(auth, (u) => { 
+            state.user = u;
             updateUI(); 
-            // Solo navegar al inicio si es la primera carga
             if(!state.initialLoad) {
                 state.initialLoad = true;
                 app.navigate('inicio'); 
@@ -159,7 +162,6 @@
                 </div>`
         };
 
-        // Función para convertir imagen a Base64
         const fileToBase64 = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -175,22 +177,21 @@
             const desc = document.getElementById('p-desc').value;
             const btn = document.getElementById('btn-save');
 
-            if(!file || !name || !price) return alert("Por favor completa los campos y selecciona una imagen.");
+            if (!state.user) return alert("Debes estar autenticado para guardar.");
+            if (!file || !name || !price) return alert("Por favor completa los campos y selecciona una imagen.");
 
-            // Validar tamaño (Base64 aumenta el peso, Firestore limita a 1MB por documento)
-            if(file.size > 800 * 1024) { // Límite recomendado ~800KB para evitar el 1MB de Firestore
-                return alert("La imagen es muy pesada. Por favor usa una de menos de 800KB.");
+            if(file.size > 800 * 1024) {
+                return alert("La imagen es muy pesada (máx 800KB).");
             }
 
             btn.innerHTML = '<div class="loader"></div> PROCESANDO...';
             btn.disabled = true;
 
             try {
-                // 1. Convertir a Base64 directamente (Sin Storage)
                 const base64Image = await fileToBase64(file);
 
-                // 2. Guardar en Firestore
-                await addDoc(collection(db, 'products'), {
+                // USANDO RUTA ESTRICTA PARA EVITAR ERRORES DE PERMISOS
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), {
                     name, 
                     price: parseFloat(price), 
                     description: desc, 
@@ -229,14 +230,20 @@
             status.innerHTML = state.isAdmin ? '<div class="bg-gold/10 text-gold px-3 py-1 rounded-full text-[9px] font-black border border-gold/20">HPC-ADMIN</div>' : '';
         }
 
-        // Listener en tiempo real de Firestore
-        onSnapshot(collection(db, 'products'), (snap) => {
+        // LISTENER CON RUTA ESTRICTA
+        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), (snap) => {
             state.products = snap.docs.map(d => ({id: d.id, ...d.data()}));
             if(state.view === 'catalogo') render();
+        }, (error) => {
+            console.error("Error en Snapshot:", error);
         });
 
         window.onload = async () => { 
-            await signInAnonymously(auth); 
+            try {
+                await signInAnonymously(auth); 
+            } catch (e) {
+                console.error("Error al iniciar sesión anónima:", e);
+            }
             render(); 
         };
     </script>
