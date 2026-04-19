@@ -1,39 +1,214 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HPC & MARBEC | Pailería y Herrería Industrial</title>
-    
+    <title>HPC & MARBEC | Tienda Oficial</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        :root {
-            --dark-ebony: #0a0a0a;
-            --coffee-deep: #1a0f0a;
-            --gold: #d4af37;
-            --cream: #f4ece1;
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; }
+        .page-section { display: none; }
+        .page-section.active { display: block; animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .admin-only { display: none; }
+        body.is-admin .admin-only { display: block; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <!-- CONFIGURACIÓN PERSONALIZADA -->
+    <script>
+        // EDITAR AQUÍ
+        const MI_WHATSAPP = "521234567890"; // Tu número (Código país + número)
+        const ADMIN_PASSWORD = "admin123";  // Clave para el panel
+    </script>
+
+    <!-- NAVBAR -->
+    <nav class="glass sticky top-0 z-[100] border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <h1 class="text-2xl font-black tracking-tighter text-indigo-600 cursor-pointer" onclick="showPage('inicio')">
+                MARBEC
+            </h1>
+            <div class="flex items-center gap-4">
+                <div class="hidden md:flex gap-8 text-sm font-bold text-slate-500 mr-8">
+                    <button onclick="showPage('inicio')" class="hover:text-indigo-600 transition uppercase tracking-widest">Inicio</button>
+                    <button onclick="showPage('productos')" class="hover:text-indigo-600 transition uppercase tracking-widest">Catálogo</button>
+                </div>
+                <button id="adminLoginBtn" onclick="openLogin()" class="text-[10px] font-black tracking-widest uppercase bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-indigo-600 transition">
+                    Admin
+                </button>
+                <button id="logoutBtn" onclick="logout()" class="admin-only text-[10px] font-black tracking-widest uppercase bg-red-500 text-white px-4 py-2 rounded-full">
+                    Salir
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENIDO -->
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        
+        <!-- INICIO -->
+        <section id="inicio" class="page-section active">
+            <div class="relative rounded-[40px] overflow-hidden bg-slate-900 h-[60vh] flex items-center px-12 shadow-2xl">
+                <div class="absolute inset-0 opacity-50">
+                    <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80" class="w-full h-full object-cover" alt="Hero">
+                </div>
+                <div class="relative z-10 max-w-xl">
+                    <h2 class="text-6xl font-extrabold text-white leading-tight mb-6">Tu estilo, <br><span class="text-indigo-400">tu tienda.</span></h2>
+                    <p class="text-slate-200 text-lg mb-8">Bienvenido a Marbec. Explora nuestra selección exclusiva y haz tu pedido directamente por WhatsApp.</p>
+                    <button onclick="showPage('productos')" class="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-bold shadow-xl hover:bg-indigo-700 transition">
+                        Ver Catálogo
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CATÁLOGO -->
+        <section id="productos" class="page-section">
+            <div class="flex justify-between items-end mb-12">
+                <h2 class="text-4xl font-black">Catálogo</h2>
+                <button onclick="openAddProduct()" class="admin-only bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg flex items-center gap-2">
+                    <span>+</span> Nuevo Producto
+                </button>
+            </div>
+            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Los productos se cargan aquí -->
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL LOGIN -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden z-[200] flex items-center justify-center p-6">
+        <div class="bg-white p-8 rounded-[32px] w-full max-w-sm shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Acceso Administrador</h3>
+            <input type="password" id="passInput" class="w-full p-4 bg-slate-50 border rounded-2xl mb-4 outline-none focus:ring-2 focus:ring-indigo-600" placeholder="Contraseña">
+            <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg">Entrar</button>
+            <button onclick="closeLogin()" class="w-full mt-2 text-slate-400 font-bold text-sm">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL AGREGAR -->
+    <div id="addModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden z-[200] flex items-center justify-center p-6">
+        <div class="bg-white p-10 rounded-[32px] w-full max-w-lg shadow-2xl">
+            <h3 class="text-2xl font-bold mb-6">Subir Producto</h3>
+            <form id="productForm" class="space-y-4">
+                <input type="text" id="pName" required class="w-full p-4 bg-slate-50 rounded-2xl outline-none border focus:ring-2 focus:ring-indigo-500" placeholder="Nombre del producto">
+                <input type="number" id="pPrice" required class="w-full p-4 bg-slate-50 rounded-2xl outline-none border focus:ring-2 focus:ring-indigo-500" placeholder="Precio ($)">
+                <input type="url" id="pImg" required class="w-full p-4 bg-slate-50 rounded-2xl outline-none border focus:ring-2 focus:ring-indigo-500" placeholder="URL de la imagen (Directa)">
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeAddProduct()" class="flex-1 font-bold text-slate-400">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold">Publicar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FIREBASE INTEGRATION -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // TUS CREDENCIALES DE MARBEC
+        const firebaseConfig = {
+            apiKey: "AIzaSyCYL93Xg4wXL4AqkEJKxrsDLtykL0hPy6c",
+            authDomain: "hpc--marbec.firebaseapp.com",
+            projectId: "hpc--marbec",
+            storageBucket: "hpc--marbec.firebasestorage.app",
+            messagingSenderId: "444083999561",
+            appId: "1:444083999561:web:de23baa9362942671e0098",
+            measurementId: "G-1DX8SHV1YP"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Iniciar sesión anónima para permitir lectura pública
+        signInAnonymously(auth).catch(err => console.error("Error Auth:", err));
+
+        // Cargar productos en tiempo real
+        const productsGrid = document.getElementById('productsGrid');
+        const q = query(collection(db, "productos"), orderBy("timestamp", "desc"));
+
+        onSnapshot(q, (snapshot) => {
+            productsGrid.innerHTML = '';
+            snapshot.forEach((docSnap) => {
+                const p = docSnap.data();
+                const id = docSnap.id;
+                const card = document.createElement('div');
+                card.className = "group bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500";
+                card.innerHTML = `
+                    <div class="h-56 bg-slate-100 rounded-[1.5rem] overflow-hidden relative mb-4">
+                        <img src="${p.img}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" onerror="this.src='https://placehold.co/400x400?text=Marbec'">
+                        <button onclick="window.deleteItem('${id}')" class="admin-only absolute top-3 right-3 bg-red-500 text-white p-2 rounded-full shadow-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <h3 class="font-bold text-lg px-2">${p.name}</h3>
+                    <div class="flex justify-between items-center mt-4 px-2">
+                        <span class="text-xl font-black text-indigo-600">$${p.price}</span>
+                        <button onclick="window.buy('${p.name}')" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-green-500 transition">Comprar</button>
+                    </div>
+                `;
+                productsGrid.appendChild(card);
+            });
+        });
+
+        // Funciones Globales para los botones
+        window.buy = (name) => {
+            const msg = encodeURIComponent(`Hola Marbec, me interesa comprar: ${name}. ¿Me das más info?`);
+            window.open(`https://wa.me/${MI_WHATSAPP}?text=${msg}`, '_blank');
+        };
+
+        window.deleteItem = async (id) => {
+            if(confirm("¿Eliminar este producto?")) {
+                await deleteDoc(doc(db, "productos", id));
+            }
+        };
+
+        document.getElementById('productForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const nuevo = {
+                name: document.getElementById('pName').value,
+                price: document.getElementById('pPrice').value,
+                img: document.getElementById('pImg').value,
+                timestamp: Date.now()
+            };
+            try {
+                await addDoc(collection(db, "productos"), nuevo);
+                closeAddProduct();
+                e.target.reset();
+            } catch (err) { alert("Error al subir. Revisa tus reglas de Firestore."); }
+        };
+    </script>
+
+    <script>
+        // UI Control
+        function showPage(id) {
+            document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            window.scrollTo({top:0, behavior:'smooth'});
         }
-        body { background-color: var(--dark-ebony); color: var(--cream); font-family: 'Inter', sans-serif; }
-        .bg-coffee { background-color: var(--coffee-deep); }
-        .text-gold { color: var(--gold); }
-        .btn-gold {
-            background: linear-gradient(135deg, #d4af37 0%, #b08d4b 100%);
-            color: #000; font-weight: 800; text-transform: uppercase;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        function openLogin() { document.getElementById('loginModal').classList.remove('hidden'); }
+        function closeLogin() { document.getElementById('loginModal').classList.add('hidden'); }
+        function login() {
+            if(document.getElementById('passInput').value === ADMIN_PASSWORD) {
+                document.body.classList.add('is-admin');
+                closeLogin();
+            } else { alert("Clave incorrecta"); }
         }
-        .btn-gold:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        .glass-nav { background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(212, 175, 55, 0.15); }
-        input, textarea {
-            background: rgba(255, 255, 255, 0.03) !important;
-            border: 1px solid rgba(212, 175, 55, 0.1) !important;
-            color: white !important; padding: 0.75rem 1rem; border-radius: 0.75rem; width: 100%;
-        }
-        /* Loader simple */
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #d4af37;
+        function logout() { document.body.classList.remove('is-admin'); }
+        function openAddProduct() { document.getElementById('addModal').classList.remove('hidden'); }
+        function closeAddProduct() { document.getElementById('addModal').classList.add('hidden'); }
+    </script>
+</body>
+</html>
+
+```
             border-radius: 50%;
             width: 20px;
             height: 20px;
